@@ -1,0 +1,5 @@
+__include__: [tem_hgnetv2_l.yml]
+output_dir: ./outputs/tem_hgnetv2_h
+HGNetv2: {name: H}
+HybridEncoder: {hidden_dim: 512, dim_feedforward: 2048, num_encoder_layers: 2}
+RTDETRTransformerv2: {feat_channels: [512, 512, 512]}

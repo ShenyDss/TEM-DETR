@@ -1,0 +1,3 @@
+__include__: [tem_anomaly_only_mvtec.yml]
+output_dir: ./outputs/tem_r101
+PResNet: {depth: 101}

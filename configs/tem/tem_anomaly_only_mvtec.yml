@@ -1,0 +1,56 @@
+__include__: [../rtdetrv2/rtdetrv2_r50vd_6x_coco.yml]
+
+model: TEMRTDETR
+num_classes: 16
+remap_mscoco_category: False
+eval_spatial_size: [448, 448]
+
+# TEM paired-view modules. Set either flag to false for ablations.
+TEMRTDETR:
+  backbone: PResNet
+  encoder: HybridEncoder
+  decoder: RTDETRTransformerv2
+  cvma_enabled: True
+  lqsd_enabled: True
+  cvma_mask_ratio: 0.20
+  cvma_position_bias: True
+  lqsd_temperature: 2.0
+  nqg_enabled: True
+  top_k: 20
+  selection_start_epoch: 0
+
+
+output_dir: ./outputs/tem_anomaly_only_mvtec
+
+train_dataloader:
+  total_batch_size: 2
+  num_workers: 0
+  dataset:
+    type: PairedCocoDetection
+    img_folder: ./data/images
+    ann_file: ./data/annotations/train.json
+    normal_root: ./data/normal
+    transforms:
+      type: Compose
+      ops:
+        - {type: Resize, size: [448, 448]}
+        - {type: ConvertPILImage, dtype: 'float32', scale: True}
+        - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}
+  collate_fn:
+    type: BatchImageCollateFunction
+    scales: [448]
+
+val_dataloader:
+  total_batch_size: 2
+  num_workers: 0
+  dataset:
+    type: PairedCocoDetection
+    img_folder: ./data/images
+    ann_file: ./data/annotations/val.json
+    normal_root: ./data/normal
+    transforms:
+      type: Compose
+      ops:
+        - {type: Resize, size: [448, 448]}
+        - {type: ConvertPILImage, dtype: 'float32', scale: True}
+        - {type: ConvertBoxes, fmt: 'cxcywh', normalize: True}

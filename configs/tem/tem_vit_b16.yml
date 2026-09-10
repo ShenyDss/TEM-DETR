@@ -1,0 +1,5 @@
+__include__: [tem_anomaly_only_mvtec.yml]
+output_dir: ./outputs/tem_vit_b16
+TEMRTDETR: {backbone: ViTB16Backbone}
+ViTB16Backbone: {pretrained: True, out_channels: 256}
+HybridEncoder: {in_channels: [256, 256, 256]}

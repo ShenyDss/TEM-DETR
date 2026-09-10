@@ -1,0 +1,5 @@
+__include__: [tem_anomaly_only_mvtec.yml]
+output_dir: ./outputs/tem_swin_t
+TEMRTDETR: {backbone: SwinTBackbone}
+SwinTBackbone: {pretrained: True}
+HybridEncoder: {in_channels: [192, 384, 768]}

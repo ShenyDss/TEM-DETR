@@ -1,0 +1,4 @@
+__include__: [tem_anomaly_only_mvtec.yml]
+output_dir: ./outputs/tem_hgnetv2_l
+TEMRTDETR: {backbone: HGNetv2}
+HGNetv2: {name: L, return_idx: [1, 2, 3], freeze_at: 0, freeze_norm: True, pretrained: True}

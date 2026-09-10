@@ -1,0 +1,11 @@
+# Install a matching torch/torchvision pair for your CUDA version first.
+torch>=2.0.1
+torchvision>=0.15.2
+numpy
+Pillow
+PyYAML
+scipy
+packaging
+tensorboard
+pycocotools
+faster-coco-eval>=1.6.6

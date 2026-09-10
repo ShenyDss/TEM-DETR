@@ -1,0 +1,5 @@
+__include__: [tem_anomaly_only_mvtec.yml]
+output_dir: ./outputs/tem_r18
+PResNet: {depth: 18, freeze_at: -1, freeze_norm: False}
+HybridEncoder: {in_channels: [128, 256, 512], expansion: 0.5}
+RTDETRTransformerv2: {num_layers: 3}
