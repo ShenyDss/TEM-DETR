@@ -1,0 +1,11 @@
+__include__: [tem_anomaly_only_mvtec.yml]
+
+output_dir: E:/TEM-DETR/outputs/tem_anomaly_only_mvtec_pool1
+epoches: 12
+
+train_dataloader:
+  dataset:
+    normal_sampling: category_pool
+    normal_pool_size: 1
+    normal_pool_seed: 17
+
