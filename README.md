@@ -2,7 +2,17 @@
 
 Template-guided industrial defect detection built on RT-DETRv2.
 
-[中文说明](README-CN.md)
+## Model Framework
+
+TEM-DETR uses aligned normal templates to guide defect representation learning and query selection within an RT-DETRv2 detector.
+
+[![TEM-DETR model framework](assets/tem_detr_framework.png)](assets/tem_detr_framework.pdf)
+
+## Detection Results
+
+Qualitative results on all 15 MVTec AD categories using TEM-DETR-R50.
+
+[![TEM-DETR detection results on MVTec AD](assets/mvtec_detection_results.png)](assets/mvtec_detection_results.pdf)
 
 ## Installation
 
