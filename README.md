@@ -1,10 +1,10 @@
 # TEM-DETR
 
-Template-guided industrial defect detection built on RT-DETRv2.
+Template-guided industrial defect detection.
 
 ## Model Framework
 
-TEM-DETR uses aligned normal templates to guide defect representation learning and query selection within an RT-DETRv2 detector.
+TEM-DETR uses aligned normal templates to guide defect representation learning and query selection.
 
 [![TEM-DETR model framework](assets/tem_detr_framework.png)](assets/tem_detr_framework.pdf)
 
