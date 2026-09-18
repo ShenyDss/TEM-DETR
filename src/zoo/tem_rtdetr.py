@@ -11,10 +11,10 @@ import torch.nn as nn
 from .rtdetr.rtdetr import RTDETR
 from ..core import register
 
-from tem_detr.models.cvma import CrossViewMaskedAttention
-from tem_detr.models.lqsd import lqsd_loss
-from tem_detr.models.normal_query_generator import NormalQueryGenerator
-from tem_detr.losses.subset_matcher import select_discrepancy_topk
+from .tem_modules.cvma import CrossViewMaskedAttention
+from .tem_modules.lqsd import lqsd_loss
+from .tem_modules.normal_query_generator import NormalQueryGenerator
+from .tem_modules.subset_matcher import select_discrepancy_topk
 
 
 @register()
@@ -36,7 +36,6 @@ class TEMRTDETR(RTDETR):
         backbone: nn.Module,
         encoder: nn.Module,
         decoder: nn.Module,
-        paired_query_enabled: bool = False,
         cvma_enabled: bool = False,
         lqsd_enabled: bool = False,
         cvma_mask_ratio: float = 0.20,
@@ -50,7 +49,6 @@ class TEMRTDETR(RTDETR):
         nqg_loss_weight: float = 0.05,
     ) -> None:
         super().__init__(backbone, encoder, decoder)
-        self.paired_query_enabled = bool(paired_query_enabled)
         self.cvma_enabled = bool(cvma_enabled)
         self.lqsd_enabled = bool(lqsd_enabled)
         self.lqsd_temperature = float(lqsd_temperature)
@@ -164,7 +162,7 @@ class TEMRTDETR(RTDETR):
                     "loss_cvma_smooth_l1": cvma_output.reconstruction_loss["smooth_l1"] * self.cvma_loss_weight,
                 }
             )
-        if self.paired_query_enabled or self.lqsd_enabled or self.nqg_enabled:
+        if self.lqsd_enabled or self.nqg_enabled:
             normal_output, normal_hidden, normal_logits, _ = self._decode(
                 cvma_output.normal_memory, spatial_shapes, targets
             )
@@ -197,50 +195,13 @@ class TEMRTDETR(RTDETR):
                     "loss_nqg_smooth_l1": nqg_l1 * self.nqg_loss_weight,
                 }
             )
-        if (self.paired_query_enabled or self.nqg_enabled) and self._tem_epoch >= self.selection_start_epoch:
-            selection = select_discrepancy_topk(anomaly_hidden[-1], normal_hidden[-1], self.top_k)
-            anomaly_output["pred_logits"] = self._gather_queries(anomaly_output["pred_logits"], selection.indices)
-            anomaly_output["pred_boxes"] = self._gather_queries(anomaly_output["pred_boxes"], selection.indices)
-            anomaly_output["query_indices"] = selection.indices
+            if self._tem_epoch >= self.selection_start_epoch:
+                selection = select_discrepancy_topk(anomaly_hidden[-1], normal_hidden[-1], self.top_k)
+                anomaly_output["pred_logits"] = self._gather_queries(anomaly_output["pred_logits"], selection.indices)
+                anomaly_output["pred_boxes"] = self._gather_queries(anomaly_output["pred_boxes"], selection.indices)
+                anomaly_output["query_indices"] = selection.indices
         if tem_losses:
             anomaly_output["tem_losses"] = tem_losses
-        return anomaly_output
-
-    def _forward_explicit_reference(self, anomaly, normal):
-        """Rank anomaly queries against queries decoded from a normal reference."""
-        anomaly_features = self.encoder(self.backbone(anomaly))
-        normal_features = self.encoder(self.backbone(normal))
-        if len(normal_features) != len(anomaly_features):
-            raise ValueError("normal and anomaly feature pyramid levels must match")
-        aligned_normal = []
-        for normal_level, anomaly_level in zip(normal_features, anomaly_features):
-            if normal_level.shape[-2:] != anomaly_level.shape[-2:]:
-                normal_level = F.interpolate(
-                    normal_level,
-                    size=anomaly_level.shape[-2:],
-                    mode="bilinear",
-                    align_corners=False,
-                )
-            aligned_normal.append(normal_level)
-        normal_memory, normal_shapes = self.decoder._get_encoder_input(aligned_normal)
-        anomaly_memory, anomaly_shapes = self.decoder._get_encoder_input(anomaly_features)
-        if normal_shapes != anomaly_shapes:
-            raise ValueError("normal and anomaly encoder spatial shapes must match")
-
-        anomaly_output, anomaly_hidden, _, _ = self._decode(
-            anomaly_memory, anomaly_shapes, None
-        )
-        _, normal_hidden, _, _ = self._decode(normal_memory, normal_shapes, None)
-        selection = select_discrepancy_topk(
-            anomaly_hidden[-1], normal_hidden[-1], self.top_k
-        )
-        anomaly_output["pred_logits"] = self._gather_queries(
-            anomaly_output["pred_logits"], selection.indices
-        )
-        anomaly_output["pred_boxes"] = self._gather_queries(
-            anomaly_output["pred_boxes"], selection.indices
-        )
-        anomaly_output["query_indices"] = selection.indices
         return anomaly_output
 
     def forward(
@@ -250,19 +211,10 @@ class TEMRTDETR(RTDETR):
         normal=None,
         protection_mask=None,
         tem_epoch=None,
-        inference_mode="generated",
     ):
         self._tem_epoch = int(tem_epoch) if tem_epoch is not None else 0
-        if self.training and normal is not None and (
-            self.paired_query_enabled or self.cvma_enabled or self.lqsd_enabled or self.nqg_enabled
-        ):
+        if self.training and normal is not None and (self.cvma_enabled or self.lqsd_enabled or self.nqg_enabled):
             return self._forward_paired(x, targets, normal, protection_mask)
-        if not self.training and inference_mode == "explicit":
-            if normal is None:
-                raise ValueError("explicit-reference inference requires a normal image")
-            return self._forward_explicit_reference(x, normal)
-        if inference_mode != "generated":
-            raise ValueError("inference_mode must be 'generated' or 'explicit'")
         del normal, protection_mask
         if not self.training and self.nqg_enabled:
             feats = self.encoder(self.backbone(x))
