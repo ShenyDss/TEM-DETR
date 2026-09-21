@@ -8,6 +8,12 @@ TEM-DETR uses aligned normal templates to guide defect representation learning a
 
 [![TEM-DETR model framework](assets/tem_detr_framework.png)](assets/tem_detr_framework.pdf)
 
+## Minimal Reproduction Logs
+
+The [TensorBoard logs in `summary/`](summary/) record a minimal reproduction using this project on the test dataset. A sample of the loss curves is shown below.
+
+![Loss curves from the minimal reproduction on the test dataset](summary/loss-sample.png)
+
 ## Detection Results
 
 Qualitative results on all 15 MVTec AD categories using TEM-DETR-R50.
@@ -41,12 +47,16 @@ Each COCO image record should include a `normal_file_name` path relative to `dat
 
 ```bash
 python tools/prepare_config.py --data-root /path/to/paired_dataset --output configs/local.yml
+
 ```
 
 ## Training
 
 ```bash
 python -u tools/train.py -c configs/local.yml -d cuda --seed 42 --output-dir outputs/tem_detr -u epoches=50
+
+export CUDA_VISIBLE_DEVICES=0,1,2,3
+python -m torch.distributed.launch --nproc_per_node=4 tools/prepare_config.py --data-root /path/to/paired_dataset --output configs/local.yml
 ```
 
 ```bash
