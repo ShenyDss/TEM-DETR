@@ -1,5 +1,10 @@
 # TEM-DETR
 
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)](#installation)
+[![PyTorch](https://img.shields.io/badge/Framework-PyTorch-EE4C2C?logo=pytorch&logoColor=white)](#installation)
+[![License](https://img.shields.io/github/license/ShenyDss/TEM-DETR)](LICENSE)
+[![TensorBoard](https://img.shields.io/badge/TensorBoard-Available-FF6F00?logo=tensorflow&logoColor=white)](summary/)
+
 Template-guided industrial defect detection.
 
 ## Model Framework
